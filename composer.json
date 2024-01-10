@@ -1,0 +1,22 @@
+{
+  "name": "cclilshy/p-ripple-http-service",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Cclilshy\\PRipple\\Http\\Service\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "cclilshy",
+      "email": "jingnigg@gmail.com"
+    }
+  ],
+  "require": {
+    "cclilshy/p-ripple": "v0.2.9",
+    "ext-posix": "*"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "version": "dev-main"
+}
