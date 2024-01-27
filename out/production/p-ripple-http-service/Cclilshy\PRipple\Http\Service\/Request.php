@@ -290,7 +290,15 @@ class Request extends Coroutine
         $headers['Content-Disposition'] = "attachment; filename=\"{$filename}\"";
         $headers['Content-Length']      = $filesize;
         $headers['Accept-Length']       = $filesize;
-        Buffer::fileToSocket($path, $this->client);
+        $this->on(Request::ON_DOWNLOAD, function () {
+
+        });
+
+        /**
+         * @var Buffer $bufferWorker
+         */
+        $bufferWorker = WorkerMap::get(Buffer::class);
+        $bufferWorker->fileToSocket($path, $this->client);
         return $this->respondBody("", $headers);
     }
 
