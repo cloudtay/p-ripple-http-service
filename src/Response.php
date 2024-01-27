@@ -40,8 +40,8 @@
 
 namespace Cclilshy\PRipple\Http\Service;
 
-use Core\FileSystem\File;
-use Worker\Socket\TCPConnection;
+use Cclilshy\PRipple\Filesystem\File;
+use Cclilshy\PRipple\Worker\Socket\TCPConnection;
 
 /**
  * 响应实体

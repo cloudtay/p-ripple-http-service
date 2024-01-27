@@ -39,9 +39,9 @@
 
 namespace Cclilshy\PRipple\Http\Service;
 
-use Core\Map\EventMap;
-use Event\Event;
-use Worker\Socket\TCPConnection;
+use Cclilshy\PRipple\Core\Map\EventMap;
+use Cclilshy\PRipple\Core\Event\Event;
+use Cclilshy\PRipple\Worker\Socket\TCPConnection;
 
 /**
  * Http流工厂

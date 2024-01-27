@@ -40,9 +40,9 @@
 
 namespace Cclilshy\PRipple\Http\Service;
 
-use Core\Map\EventMap;
-use Core\Output;
-use Event\Event;
+use Cclilshy\PRipple\Core\Event\Event;
+use Cclilshy\PRipple\Core\Map\EventMap;
+use Cclilshy\PRipple\Core\Output;
 
 /**
  * Http上传解析器

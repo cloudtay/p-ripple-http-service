@@ -41,14 +41,14 @@
 namespace Cclilshy\PRipple\Http\Service;
 
 use Closure;
-use Core\Map\CoroutineMap;
-use Core\Output;
-use Event\Event;
+use Cclilshy\PRipple\Core\Map\CoroutineMap;
+use Cclilshy\PRipple\Core\Output;
+use Cclilshy\PRipple\Core\Event\Event;
+use Cclilshy\PRipple\PRipple;
 use InvalidArgumentException;
-use PRipple;
 use Throwable;
-use Worker\Socket\TCPConnection;
-use Worker\Worker;
+use Cclilshy\PRipple\Worker\Worker;
+use Cclilshy\PRipple\Worker\Socket\TCPConnection;
 
 /**
  * Http服务类

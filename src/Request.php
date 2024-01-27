@@ -39,11 +39,11 @@
 
 namespace Cclilshy\PRipple\Http\Service;
 
+use Cclilshy\PRipple\Core\Coroutine\Coroutine;
+use Cclilshy\PRipple\Core\Map\WorkerMap;
+use Cclilshy\PRipple\Facade\Buffer;
+use Cclilshy\PRipple\Worker\Socket\TCPConnection;
 use Closure;
-use Core\Coroutine\Coroutine;
-use Core\Map\WorkerMap;
-use Worker\Built\Buffer;
-use Worker\Socket\TCPConnection;
 
 /**
  * 请求实体

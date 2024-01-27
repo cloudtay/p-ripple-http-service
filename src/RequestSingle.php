@@ -39,7 +39,7 @@
 
 namespace Cclilshy\PRipple\Http\Service;
 
-use Worker\Socket\TCPConnection;
+use Cclilshy\PRipple\Worker\Socket\TCPConnection;
 
 
 /**

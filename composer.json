@@ -13,7 +13,7 @@
     }
   ],
   "require": {
-    "cclilshy/p-ripple": "v0.2.9",
+    "cclilshy/p-ripple": "*",
     "ext-posix": "*"
   },
   "minimum-stability": "dev",
