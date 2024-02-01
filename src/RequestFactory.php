@@ -93,7 +93,7 @@ class RequestFactory
         if ($single = $this->transfers[$clientHash] ?? null) {
             if ($single->revolve($context)->statusCode === RequestFactory::COMPLETE) {
                 unset($this->transfers[$clientHash]);
-                EventMap::push(Event::new(RequestFactory::COMPLETE, [], $single->hash));
+                EventMap::push(Event::build(RequestFactory::COMPLETE, [], $single->hash));
             }
             return null;
         }
@@ -103,7 +103,7 @@ class RequestFactory
         $single->revolve($context);
         if (isset($single->method) && $single->method === 'POST' && $single->upload) {
             if ($single->statusCode === RequestFactory::COMPLETE) {
-                EventMap::push(Event::new(RequestFactory::COMPLETE, [], $single->hash));
+                EventMap::push(Event::build(RequestFactory::COMPLETE, [], $single->hash));
             } else {
                 $this->transfers[$clientHash] = $single;
             }
@@ -112,7 +112,7 @@ class RequestFactory
         }
         switch ($single->statusCode) {
             case RequestFactory::COMPLETE:
-                EventMap::push(Event::new(RequestFactory::COMPLETE, [], $single->hash));
+                EventMap::push(Event::build(RequestFactory::COMPLETE, [], $single->hash));
                 unset($this->singles[$clientHash]);
                 return $single->build();
             case RequestFactory::INVALID:
