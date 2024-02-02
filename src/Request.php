@@ -41,6 +41,7 @@ namespace Cclilshy\PRipple\Http\Service;
 
 use Cclilshy\PRipple\Core\Coroutine\Coroutine;
 use Cclilshy\PRipple\Facade\Buffer;
+use Cclilshy\PRipple\Facade\IO;
 use Cclilshy\PRipple\Worker\Socket\TCPConnection;
 use Closure;
 
@@ -141,6 +142,7 @@ class Request extends Coroutine
      * @var Closure $exceptionHandler
      */
     public Closure $exceptionHandler;
+
     /**
      * Response包应该储存请求原始数据,包括客户端连接
      * 考虑到Request在HttpWorker中的生命周期,当请求对象在Worker中被释放时
@@ -148,6 +150,7 @@ class Request extends Coroutine
      * @var Response $response
      */
     public Response $response;
+
     /**
      * 请求原始单例
      * @var RequestSingle
@@ -157,7 +160,8 @@ class Request extends Coroutine
      * @var array $responseHeaders
      */
     private array $responseHeaders = [];
-    private bool  $complete        = false;
+
+    private bool $complete = false;
 
     /**
      * @param RequestSingle $requestSingle
@@ -289,7 +293,7 @@ class Request extends Coroutine
         $headers['Content-Disposition'] = "attachment; filename=\"{$filename}\"";
         $headers['Content-Length']      = $filesize;
         $headers['Accept-Length']       = $filesize;
-        Buffer::fileToSocket($path, $this->client);
+        IO::fileToSocket($path, $this->client);
         return $this->respondBody("", $headers);
     }
 
