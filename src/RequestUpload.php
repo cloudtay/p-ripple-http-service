@@ -194,7 +194,7 @@ class RequestUpload
             fwrite($this->currentTransferFile, $content);
             fclose($this->currentTransferFile);
             $this->status = RequestUpload::STATUS_WAIT;
-            EventMap::push(Event::new(Request::ON_UPLOAD, end($this->files), $this->requestSingle->hash));
+            EventMap::push(Event::build(Request::ON_UPLOAD, end($this->files), $this->requestSingle->hash));
         } else {
             fwrite($this->currentTransferFile, $this->buffer);
             $this->buffer = '';
