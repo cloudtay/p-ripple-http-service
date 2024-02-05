@@ -40,7 +40,6 @@
 namespace Cclilshy\PRipple\Http\Service;
 
 use Cclilshy\PRipple\Core\Coroutine\Coroutine;
-use Cclilshy\PRipple\Facade\Buffer;
 use Cclilshy\PRipple\Facade\IO;
 use Cclilshy\PRipple\Worker\Socket\TCPConnection;
 use Closure;
@@ -300,18 +299,18 @@ class Request extends Coroutine
     /**
      * 订阅异步事件
      * @param string  $eventName
-     * @param Closure $callable
+     * @param Closure $closure
      * @return void
      */
-    public function on(string $eventName, Closure $callable): void
+    public function on(string $eventName, Closure $closure): void
     {
         if ($eventName === Request::ON_UPLOAD) {
             $this->flag(Request::ON_UPLOAD);
             $this->on(RequestFactory::COMPLETE, function () {
-                $this->erase(Request::ON_UPLOAD);
+                $this->erase(Request::ON_UPLOAD, true);
             });
         }
-        parent::on($eventName, $callable);
+        parent::on($eventName, $closure);
     }
 
     /**
@@ -329,12 +328,12 @@ class Request extends Coroutine
     /**
      * 重写Coroutine的main注入器
      * 将自身作为最基础的依赖对象,供其他类构建时使用
-     * @param Closure $callable
+     * @param Closure $closure
      * @return Coroutine
      */
-    public function setup(Closure $callable): Coroutine
+    public function setup(Closure $closure): Coroutine
     {
-        $result = parent::setup($callable);
+        $result = parent::setup($closure);
         $this->inject(Response::class, $this->response);
         $this->requestSingle->hash = $this->hash;
         return $result;
