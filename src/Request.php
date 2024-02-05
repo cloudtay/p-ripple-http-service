@@ -296,22 +296,16 @@ class Request extends Coroutine
         return $this->respondBody("", $headers);
     }
 
-    /**
-     * 订阅异步事件
-     * @param string  $eventName
-     * @param Closure $closure
-     * @return void
-     */
-    public function on(string $eventName, Closure $closure): void
-    {
-        if ($eventName === Request::ON_UPLOAD) {
-            $this->flag(Request::ON_UPLOAD);
-            $this->on(RequestFactory::COMPLETE, function () {
-                $this->erase(Request::ON_UPLOAD, true);
-            });
-        }
-        parent::on($eventName, $closure);
-    }
+//    /**
+//     * 订阅异步事件
+//     * @param string  $eventName
+//     * @param Closure $closure
+//     * @return void
+//     */
+//    public function on(string $eventName, Closure $closure): void
+//    {
+//        parent::on($eventName, $closure);
+//    }
 
     /**
      * 响应基础文本

@@ -166,6 +166,7 @@ class HttpWorker extends WorkerNet
         parent::initialize();
         $this->subscribe(Request::ON_UPLOAD);
         $this->subscribe(Request::ON_DOWNLOAD);
+        $this->subscribe(RequestFactory::COMPLETE);
         $this->requestFactory = new RequestFactory($this);
         if (!$uploadPath = PRipple::getArgument('HTTP_UPLOAD_PATH')) {
             Output::printException(new InvalidArgumentException('HTTP_UPLOAD_PATH is not defined'));

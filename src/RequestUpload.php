@@ -41,8 +41,10 @@
 namespace Cclilshy\PRipple\Http\Service;
 
 use Cclilshy\PRipple\Core\Event\Event;
-use Cclilshy\PRipple\Core\Map\EventMap;
+use Cclilshy\PRipple\Core\Map\CoroutineMap;
 use Cclilshy\PRipple\Core\Output;
+use RuntimeException;
+use Throwable;
 
 /**
  * Http上传解析器
@@ -122,6 +124,17 @@ class RequestUpload
                 Output::printException($exception);
                 $this->status                    = RequestUpload::STATUS_ILLEGAL;
                 $this->requestSingle->statusCode = RequestFactory::INVALID;
+                if ($coroutine = CoroutineMap::get($this->requestSingle->hash)) {
+                    $coroutine->erase('plugin.httpService.requestFactory.upload.transfer', true);
+                    try {
+                        $coroutine->resume(Event::build(
+                            Request::ON_UPLOAD,
+                            new RuntimeException('An exception occurred during the upload process'),
+                            $this->requestSingle->hash));
+                    } catch (Throwable $exception) {
+                        Output::printException($exception);
+                    }
+                }
             }
         }
     }
@@ -171,6 +184,9 @@ class RequestUpload
      */
     private function createNewFile(): string
     {
+        if ($coroutine = CoroutineMap::get($this->requestSingle->hash)) {
+            $coroutine->flag('plugin.httpService.requestFactory.upload.transfer');
+        }
         $this->currentTransferFilePath = HttpWorker::$uploadPath . FS . md5(strval(microtime(true)));
         $this->currentTransferFile     = fopen($this->currentTransferFilePath, 'wb+');
         return $this->currentTransferFilePath;
@@ -194,7 +210,14 @@ class RequestUpload
             fwrite($this->currentTransferFile, $content);
             fclose($this->currentTransferFile);
             $this->status = RequestUpload::STATUS_WAIT;
-            EventMap::push(Event::build(Request::ON_UPLOAD, end($this->files), $this->requestSingle->hash));
+            if ($coroutine = CoroutineMap::get($this->requestSingle->hash)) {
+                $coroutine->erase('plugin.httpService.requestFactory.upload.transfer');
+                try {
+                    $coroutine->resume(Event::build(Request::ON_UPLOAD, end($this->files), $this->requestSingle->hash));
+                } catch (Throwable $exception) {
+                    Output::printException($exception);
+                }
+            }
         } else {
             fwrite($this->currentTransferFile, $this->buffer);
             $this->buffer = '';
