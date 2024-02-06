@@ -140,21 +140,12 @@ class HttpWorker extends WorkerNet
                     ->timeout(function (Throwable $exception, Event $event, Request $request) {
                         call_user_func_array($this->exceptionHandler, [$exception, $event, $request]);
                     }, $this->timeout)
-                    ->defer(fn() => $this->recover($request->hash))
                     ->execute();
             } catch (Throwable $exception) {
                 Output::printException($exception);
             }
         }
         $this->busy = false;
-    }
-
-    /**
-     * @param string $hash
-     * @return void
-     */
-    private function recover(string $hash): void
-    {
     }
 
     /**
@@ -215,16 +206,6 @@ class HttpWorker extends WorkerNet
         $this->requests[$request->hash] = $request;
         $request->client->setName($request->hash);
         $this->busy = true;
-    }
-
-    /**
-     * 回收请求
-     * @param TCPConnection $tcpConnection
-     * @return void
-     */
-    public function onClose(TCPConnection $tcpConnection): void
-    {
-        $this->recover($tcpConnection->getName());
     }
 
     /**
