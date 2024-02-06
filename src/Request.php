@@ -206,6 +206,12 @@ class Request extends Coroutine
         $this->hash          = $requestSingle->hash;
         $this->requestSingle = $requestSingle;
         $this->response      = new Response($this);
+
+        $this->flag(RequestFactory::INCOMPLETE);
+        $this->on(RequestFactory::COMPLETE, function () {
+            $this->erase(RequestFactory::INCOMPLETE);
+        });
+
         parent::__construct();
     }
 
@@ -295,17 +301,6 @@ class Request extends Coroutine
         IO::fileToSocket($path, $this->client);
         return $this->respondBody("", $headers);
     }
-
-//    /**
-//     * 订阅异步事件
-//     * @param string  $eventName
-//     * @param Closure $closure
-//     * @return void
-//     */
-//    public function on(string $eventName, Closure $closure): void
-//    {
-//        parent::on($eventName, $closure);
-//    }
 
     /**
      * 响应基础文本
