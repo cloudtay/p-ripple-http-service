@@ -40,15 +40,15 @@
 
 namespace Cclilshy\PRipple\Http\Service;
 
-use Cclilshy\PRipple\Worker\WorkerNet;
-use Closure;
+use Cclilshy\PRipple\Core\Event\Event;
 use Cclilshy\PRipple\Core\Map\CoroutineMap;
 use Cclilshy\PRipple\Core\Output;
-use Cclilshy\PRipple\Core\Event\Event;
 use Cclilshy\PRipple\PRipple;
+use Cclilshy\PRipple\Worker\Socket\TCPConnection;
+use Cclilshy\PRipple\Worker\WorkerNet;
+use Closure;
 use InvalidArgumentException;
 use Throwable;
-use Cclilshy\PRipple\Worker\Socket\TCPConnection;
 
 /**
  * Http服务类

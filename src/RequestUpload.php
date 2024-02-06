@@ -108,6 +108,7 @@ class RequestUpload
      * 上下文推入
      * @param string $context
      * @return void
+     * @throws RequestSingleException
      */
     public function push(string $context): void
     {
@@ -122,8 +123,7 @@ class RequestUpload
                 }
             } catch (RequestSingleException $exception) {
                 Output::printException($exception);
-                $this->status                    = RequestUpload::STATUS_ILLEGAL;
-                $this->requestSingle->statusCode = RequestFactory::INVALID;
+                $this->status = RequestUpload::STATUS_ILLEGAL;
                 if ($coroutine = CoroutineMap::get($this->requestSingle->hash)) {
                     $coroutine->erase('plugin.httpService.requestFactory.upload.transfer', true);
                     try {
@@ -135,6 +135,7 @@ class RequestUpload
                         Output::printException($exception);
                     }
                 }
+                throw new RequestSingleException('An exception occurred during the upload process');
             }
         }
     }

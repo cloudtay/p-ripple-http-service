@@ -137,42 +137,62 @@ class RequestSingle
     /**
      * Push request body
      * @param string $context
-     * @return RequestSingle
+     * @return void
      * @throws RequestSingleException
      */
-    public function revolve(string $context): self
+    public function revolve(string $context): void
     {
         if (!isset($this->method)) {
-            if ($this->parseRequestHead($context)) {
-                $context = $this->body;
-            } else {
-                return $this;
+            //
+
+            if (!$this->parseRequestHead($context)) {
+                return;
+            }
+
+            switch ($this->method) {
+                case 'GET':
+                    $this->statusCode = RequestFactory::COMPLETE;
+                    return;
+                case 'POST':
+                case 'PUT':
+                case 'PATCH':
+                case 'DELETE':
+                    break;
+            }
+        } else {
+            //
+
+            switch ($this->method) {
+                case 'POST':
+                case 'PUT':
+                case 'PATCH':
+                case 'DELETE':
+                    $this->bodyLength += strlen($context);
+                    if ($this->upload) {
+                        $this->uploadHandler->push($context);
+                    } else {
+                        $this->body .= $context;
+                    }
+
+                    if ($this->bodyLength === intval($this->headers['Content-Length'])) {
+                        $this->statusCode = RequestFactory::COMPLETE;
+                    } elseif ($this->bodyLength > intval($this->headers['Content-Length'])) {
+                        throw new RequestSingleException('Content-Length is not match');
+                    } else {
+                        $this->statusCode = RequestFactory::INCOMPLETE;
+                    }
+                    break;
             }
         }
-        switch ($this->method) {
-            case 'GET':
-                $this->statusCode = RequestFactory::COMPLETE;
-                break;
-            case 'POST':
-            case 'PUT':
-            case 'PATCH':
-            case 'DELETE':
-                $this->bodyLength += strlen($context);
-                if ($this->upload) {
-                    $this->uploadHandler->push($context);
-                } else {
-                    $this->body .= $context;
-                }
-                if ($this->bodyLength === intval($this->headers['Content-Length'])) {
-                    $this->statusCode = RequestFactory::COMPLETE;
-                } elseif ($this->bodyLength > intval($this->headers['Content-Length'])) {
-                    throw new RequestSingleException('Content-Length is not match');
-                } else {
-                    $this->statusCode = RequestFactory::INCOMPLETE;
-                }
-                break;
+
+
+        if ($this->bodyLength === intval($this->headers['Content-Length'])) {
+            $this->statusCode = RequestFactory::COMPLETE;
+        } elseif ($this->bodyLength > intval($this->headers['Content-Length'])) {
+            throw new RequestSingleException('Content-Length is not match');
+        } else {
+            $this->statusCode = RequestFactory::INCOMPLETE;
         }
-        return $this;
     }
 
     /**
@@ -183,12 +203,13 @@ class RequestSingle
     private function parseRequestHead(string $context): bool
     {
         if ($headerEnd = strpos($context, "\r\n\r\n")) {
-            $this->header = substr($context, 0, $headerEnd);
-            $this->body   = substr($context, $headerEnd + 4);
-            $baseContent  = strtok($this->header, "\r\n");
+            $this->header     = substr($context, 0, $headerEnd);
+            $this->body       = substr($context, $headerEnd + 4);
+            $this->bodyLength = strlen($this->body);
+
+            $baseContent = strtok($this->header, "\r\n");
             if (count($base = explode(' ', $baseContent)) !== 3) {
-                $this->statusCode = RequestFactory::INVALID;
-                return false;
+                throw new RequestSingleException('Request head is not match');
             }
             $this->url     = $base[1];
             $this->version = $base[2];
@@ -199,30 +220,31 @@ class RequestSingle
                     $this->headers[$lineParam[0]] = $lineParam[1];
                 }
             }
-            if ($this->method === 'GET') {
-                $this->statusCode = RequestFactory::COMPLETE;
-                return true;
-            }
-            if (!isset($this->headers['Content-Length'])) {
-                throw new RequestSingleException('Content-Length is not set');
-            }
-            # 初次解析POST类型
-            if (!isset($this->headers['Content-Type'])) {
-                throw new RequestSingleException('Content-Type is not set');
-            }
-            $contentType = $this->headers['Content-Type'];
-            if (str_contains($contentType, 'multipart/form-data')) {
-                preg_match('/boundary=(.*)$/', $contentType, $matches);
-                if (isset($matches[1])) {
-                    $this->boundary      = $matches[1];
-                    $this->upload        = true;
-                    $this->uploadHandler = new RequestUpload($this, $this->boundary);
-                    $this->uploadHandler->push($this->body);
-                    $this->body = '';
-                } else {
-                    throw new RequestSingleException('boundary is not set');
+
+            //
+            if ($this->method === 'POST') {
+                if (!$contentType = $this->headers['Content-Type'] ?? null) {
+                    throw new RequestSingleException('Content-Type is not set');
+                }
+
+                if (!isset($this->headers['Content-Length'])) {
+                    throw new RequestSingleException('Content-Length is not set');
+                }
+
+                if (str_contains($contentType, 'multipart/form-data')) {
+                    preg_match('/boundary=(.*)$/', $contentType, $matches);
+                    if (isset($matches[1])) {
+                        $this->boundary      = $matches[1];
+                        $this->upload        = true;
+                        $this->uploadHandler = new RequestUpload($this, $this->boundary);
+                        $this->uploadHandler->push($this->body);
+                        $this->body = '';
+                    } else {
+                        throw new RequestSingleException('boundary is not set');
+                    }
                 }
             }
+
             return true;
         } else {
             $this->body .= $context;

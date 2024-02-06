@@ -39,26 +39,20 @@
 
 namespace Cclilshy\PRipple\Http\Service;
 
-use Cclilshy\PRipple\Core\Map\CoroutineMap;
+use Cclilshy\PRipple\Core\Coroutine\Coroutine;
 use Cclilshy\PRipple\Core\Event\Event;
+use Cclilshy\PRipple\Core\Map\CoroutineMap;
 use Cclilshy\PRipple\Core\Output;
 use Cclilshy\PRipple\Worker\Socket\TCPConnection;
 use Throwable;
 
 /**
- * Http流工厂
+ * @class RequestFactory Http流工厂
  */
 class RequestFactory
 {
-    public const string INVALID    = 'plugin.httpService.requestFactory.invalid';       # 传输异常
     public const string COMPLETE   = 'plugin.httpService.requestFactory.complete';      # 传输完成
     public const string INCOMPLETE = 'plugin.httpService.requestFactory.incomplete';    # 传输中
-
-    /**
-     * Http服务实体
-     * @var HttpWorker $httpService
-     */
-    private HttpWorker $httpService;
 
     /**
      * 传输中的Request
@@ -73,16 +67,6 @@ class RequestFactory
     private array $transfers = [];
 
     /**
-     * HttpWorker constructor.
-     * 也许会用到.
-     * @param HttpWorker $httpService
-     */
-    public function __construct(HttpWorker $httpService)
-    {
-        $this->httpService = $httpService;
-    }
-
-    /**
      * 解析请求
      * @param string        $context
      * @param TCPConnection $client
@@ -93,33 +77,21 @@ class RequestFactory
     {
         $clientHash = $client->getHash();
         if ($single = $this->transfers[$clientHash] ?? null) {
-            if ($single->revolve($context)->statusCode === RequestFactory::COMPLETE) {
-                unset($this->transfers[$clientHash]);
-                try {
-                    CoroutineMap::resume($single->hash, Event::build(RequestFactory::COMPLETE, [], $single->hash));
-                } catch (Throwable $exception) {
-                    Output::printException($exception);
-                }
-            }
-            return null;
-        }
-        if (!$single = $this->singles[$clientHash] ?? null) {
-            $this->singles[$clientHash] = $single = new RequestSingle($client);
-        }
-        $single->revolve($context);
-        if (isset($single->method) && $single->method === 'POST' && $single->upload) {
+            $single->revolve($context);
             if ($single->statusCode === RequestFactory::COMPLETE) {
                 try {
                     CoroutineMap::resume($single->hash, Event::build(RequestFactory::COMPLETE, [], $single->hash));
                 } catch (Throwable $exception) {
                     Output::printException($exception);
                 }
-            } else {
-                $this->transfers[$clientHash] = $single;
+                unset($this->transfers[$clientHash]);
             }
-            unset($this->singles[$clientHash]);
-            return $single->build();
+            return null;
+        } elseif (!$single = $this->singles[$clientHash] ?? null) {
+            $single = $this->singles[$clientHash] = new RequestSingle($client);
         }
+
+        $single->revolve($context);
         switch ($single->statusCode) {
             case RequestFactory::COMPLETE:
                 try {
@@ -129,11 +101,18 @@ class RequestFactory
                 }
                 unset($this->singles[$clientHash]);
                 return $single->build();
-            case RequestFactory::INVALID:
-                $this->httpService->removeTcpConnection($client);
-                unset($this->singles[$clientHash]);
-                break;
             case RequestFactory::INCOMPLETE:
+                if ($single->upload) {
+                    $this->transfers[$clientHash] = $single;
+                    $request                      = $single->build();
+                    $request->flag(RequestFactory::INCOMPLETE);
+                    $request->on(RequestFactory::COMPLETE, function (Coroutine $coroutine) {
+                        $coroutine->erase(RequestFactory::INCOMPLETE);
+                    });
+                    unset($this->singles[$clientHash]);
+                    $this->transfers[$clientHash] = $single;
+                    return $request;
+                }
                 break;
         }
         return null;

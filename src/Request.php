@@ -206,12 +206,6 @@ class Request extends Coroutine
         $this->hash          = $requestSingle->hash;
         $this->requestSingle = $requestSingle;
         $this->response      = new Response($this);
-
-        $this->flag(RequestFactory::INCOMPLETE);
-        $this->on(RequestFactory::COMPLETE, function () {
-            $this->erase(RequestFactory::INCOMPLETE);
-        });
-
         parent::__construct();
     }
 
