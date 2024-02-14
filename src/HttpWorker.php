@@ -158,7 +158,7 @@ class HttpWorker extends WorkerNet
         $this->subscribe(Request::ON_UPLOAD);
         $this->subscribe(Request::ON_DOWNLOAD);
         $this->subscribe(RequestFactory::COMPLETE);
-        $this->requestFactory = new RequestFactory($this);
+        $this->requestFactory = new RequestFactory();
         if (!$uploadPath = PRipple::getArgument('HTTP_UPLOAD_PATH')) {
             Output::printException(new InvalidArgumentException('HTTP_UPLOAD_PATH is not defined'));
             exit(0);
@@ -168,29 +168,29 @@ class HttpWorker extends WorkerNet
 
     /**
      * 设置为非堵塞模式
-     * @param TCPConnection $tcpConnection
+     * @param TCPConnection $TCPConnection
      * @return void
      */
-    public function onConnect(TCPConnection $tcpConnection): void
+    public function onConnect(TCPConnection $TCPConnection): void
     {
-        $tcpConnection->setReceiveBufferSize(81920);
-        $tcpConnection->setSendBufferSize(81920);
+        $TCPConnection->setReceiveBufferSize(81920);
+        $TCPConnection->setSendBufferSize(81920);
     }
 
     /**
      * 原始报文到达,压入请求工厂
      * @param string        $context
-     * @param TCPConnection $tcpConnection
+     * @param TCPConnection $TCPConnection
      * @return void
      */
-    public function onMessage(string $context, TCPConnection $tcpConnection): void
+    public function onMessage(string $context, TCPConnection $TCPConnection): void
     {
         try {
-            if (($request = $this->requestFactory->revolve($context, $tcpConnection)) instanceof Request) {
+            if (($request = $this->requestFactory->revolve($context, $TCPConnection)) instanceof Request) {
                 $this->onRequest($request);
             }
         } catch (RequestSingleException $exception) {
-            $tcpConnection->send(
+            $TCPConnection->send(
                 (new Response())->setStatusCode(400)->setBody($exception->getMessage())->__toString()
             );
         }
