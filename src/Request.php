@@ -43,6 +43,7 @@ use Cclilshy\PRipple\Core\Coroutine\Coroutine;
 use Cclilshy\PRipple\Facade\IO;
 use Cclilshy\PRipple\Worker\Socket\TCPConnection;
 use Closure;
+use function Co\async;
 
 /**
  * 请求实体
@@ -154,7 +155,8 @@ class Request extends Coroutine
      * 请求原始单例
      * @var RequestSingle
      */
-    private RequestSingle $requestSingle;
+    public RequestSingle $requestSingle;
+
     /**
      * @var array $responseHeaders
      */
@@ -292,7 +294,7 @@ class Request extends Coroutine
         $headers['Content-Disposition'] = "attachment; filename=\"{$filename}\"";
         $headers['Content-Length']      = $filesize;
         $headers['Accept-Length']       = $filesize;
-        IO::fileToSocket($path, $this->client);
+        async(fn() => IO::fileToSocket($path, $this->client));
         return $this->respondBody("", $headers);
     }
 
@@ -316,9 +318,9 @@ class Request extends Coroutine
      */
     public function setup(Closure $closure): Coroutine
     {
-        $result = parent::setup($closure);
+        parent::setup($closure);;
         $this->inject(Response::class, $this->response);
         $this->requestSingle->hash = $this->hash;
-        return $result;
+        return $this;
     }
 }

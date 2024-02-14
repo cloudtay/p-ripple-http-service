@@ -106,7 +106,7 @@ class RequestFactory
                     $this->transfers[$clientHash] = $single;
                     $request                      = $single->build();
                     $request->flag(RequestFactory::INCOMPLETE);
-                    $request->on(RequestFactory::COMPLETE, function (Coroutine $coroutine) {
+                    $request->on(RequestFactory::COMPLETE, function (Event $event, Coroutine $coroutine) {
                         $coroutine->erase(RequestFactory::INCOMPLETE);
                     });
                     unset($this->singles[$clientHash]);

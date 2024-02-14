@@ -68,10 +68,6 @@ class Response
      */
     public string $body = '';
 
-    /**
-     * @var File $file
-     */
-    public File $file;
 
     /**
      * @var bool $isFile

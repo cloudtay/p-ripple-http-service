@@ -112,43 +112,6 @@ class HttpWorker extends WorkerNet
     }
 
     /**
-     * 心跳
-     * @return void
-     */
-    public function heartbeat(): void
-    {
-        while ($request = array_shift($this->requests)) {
-            try {
-                $request
-                    ->setup(function (Request $request) {
-                        $requesting = call_user_func($this->requestHandler, $request);
-                        foreach ($requesting as $response) {
-                            if ($response instanceof Response) {
-                                $response->setHeader('Server', 'PRipple');
-                                if ($request->keepAlive) {
-                                    $response->setHeader('Connection', 'Keep-Alive');
-                                    $response->setHeader('Keep-Alive', 'timeout=5, max=1000');
-                                }
-                                $request->client->send($response->__toString());
-                                if (!$request->keepAlive) {
-                                    $this->removeTcpConnection($request->client);
-                                }
-                            }
-                        }
-                    })
-                    ->except($this->exceptionHandler)
-                    ->timeout(function (Throwable $exception, Event $event, Request $request) {
-                        call_user_func_array($this->exceptionHandler, [$exception, $event, $request]);
-                    }, $this->timeout)
-                    ->execute();
-            } catch (Throwable $exception) {
-                Output::printException($exception);
-            }
-        }
-        $this->busy = false;
-    }
-
-    /**
      * 创建请求工厂
      * @return void
      */
@@ -203,9 +166,32 @@ class HttpWorker extends WorkerNet
      */
     public function onRequest(Request $request): void
     {
-        $this->requests[$request->hash] = $request;
-        $request->client->setName($request->hash);
-        $this->busy = true;
+        try {
+            $request
+                ->setup(function (Request $request) {
+                    $requesting = call_user_func($this->requestHandler, $request);
+                    foreach ($requesting as $response) {
+                        if ($response instanceof Response) {
+                            $response->setHeader('Server', 'PRipple');
+                            if ($request->keepAlive) {
+                                $response->setHeader('Connection', 'Keep-Alive');
+                                $response->setHeader('Keep-Alive', 'timeout=5, max=1000');
+                            }
+                            $request->client->send($response->__toString());
+                            if (!$request->keepAlive) {
+                                $this->removeTcpConnection($request->client);
+                            }
+                        }
+                    }
+                })
+                ->catch($this->exceptionHandler)
+                ->timeout(function (Throwable $exception, Event $event, Request $request) {
+                    call_user_func_array($this->exceptionHandler, [$exception, $event, $request]);
+                }, $this->timeout)
+                ->execute();
+        } catch (Throwable $exception) {
+            Output::printException($exception);
+        }
     }
 
     /**
